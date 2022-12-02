@@ -13,7 +13,7 @@ from .param_value import ParamValue
 class Wall:
     def __init__(self, yaml_node, wall_params):
 
-        self.wall_height = 2.5  # meters
+        self.wall_height = 0.7  # meters
         self.wall_thickness = 0.1  # meters
         self.transformed_vertices = []  # check if use vertex indics?? todo
         self.walls = []

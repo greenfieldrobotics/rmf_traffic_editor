@@ -9,8 +9,10 @@ import tempfile
 import yaml
 
 from ament_index_python.packages import get_package_share_directory
-from pyproj import Transformer
+# from pyproj import Transformer
 from pyproj.crs import CRS
+
+from .alvinxy import Transformer
 from xml.etree.ElementTree import Element, ElementTree, SubElement, parse
 
 from .coordinate_system import CoordinateSystem
@@ -25,6 +27,7 @@ from .passthrough_transform import PassthroughTransform
 from .vertex import Vertex
 from .web_mercator_transform import WebMercatorTransform
 from .wgs84_transform import WGS84Transform
+from .wgs84_transform_alvinxy import WGS84TransformAlvinXY
 
 
 class Building:
@@ -110,9 +113,11 @@ class Building:
             if 'generate_crs' not in self.params:
                 # todo: automatically add a reasonable CRS in traffic-editor
                 raise ValueError('generate_crs must be defined in wgs84 maps')
-
+            
             crs_name = self.params['generate_crs'].value
-
+            origin_lat = self.params['origin_lat'].value
+            origin_long = self.params['origin_long'].value
+            print(origin_lat, origin_long)
             if 'suggested_offset_x' in self.params:
                 offset_x = self.params['suggested_offset_x'].value
             else:
@@ -124,7 +129,7 @@ class Building:
                 offset_y = 0
 
             self.global_transform = \
-                WGS84Transform(crs_name, (offset_x, offset_y))
+                WGS84TransformAlvinXY(crs_name, (offset_x, offset_y), (origin_lat , origin_long))
 
         self.levels = {}
         self.model_counts = {}
@@ -188,6 +193,7 @@ class Building:
 
         # project from WGS 84 to whatever is requested by this file
         transformer = Transformer.from_crs('EPSG:4326', crs_name)
+        # transformer = Transformer()
 
         # Spin through all items and see how many levels we have.
         # todo: encode level polygons and names in GeoJSON files.
@@ -866,6 +872,10 @@ class Building:
             return {}
 
         source_crs = self.params['generate_crs'].value
+        origin_lat = self.params['origin_lat'].value
+        origin_long = self.params['origin_long'].value
+        
+        print(source_crs)
         wgs_transformer = Transformer.from_crs(source_crs, 'EPSG:4326')
 
         features = []
@@ -882,7 +892,7 @@ class Building:
         for level_name, level in self.levels.items():
             level_idx = level_idx_table[level_name]
             for vertex in level.vertices:
-                (lat, lon) = wgs_transformer.transform(vertex.y, vertex.x)
+                (lat, lon) = wgs_transformer.transform(vertex.y, vertex.x, origin_lat, origin_long)
                 properties = {
                     'name': vertex.name,
                     'level_idx': level_idx,
@@ -909,8 +919,8 @@ class Building:
                     properties[param_name] = param_value.value
                 v1 = level.vertices[lane.start_idx]
                 v2 = level.vertices[lane.end_idx]
-                (v1_lat, v1_lon) = wgs_transformer.transform(v1.y, v1.x)
-                (v2_lat, v2_lon) = wgs_transformer.transform(v2.y, v2.x)
+                (v1_lat, v1_lon) = wgs_transformer.transform(v1.y, v1.x, origin_lat, origin_long)
+                (v2_lat, v2_lon) = wgs_transformer.transform(v2.y, v2.x, origin_lat, origin_long)
 
                 if v1.name:
                     properties['start_vertex_name'] = v1.name
