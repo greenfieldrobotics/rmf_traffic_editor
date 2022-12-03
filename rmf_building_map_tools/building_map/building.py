@@ -113,11 +113,12 @@ class Building:
             if 'generate_crs' not in self.params:
                 # todo: automatically add a reasonable CRS in traffic-editor
                 raise ValueError('generate_crs must be defined in wgs84 maps')
-            
+            self.origin_lat = None
+            self.origin_long = None
             crs_name = self.params['generate_crs'].value
-            origin_lat = self.params['origin_lat'].value
-            origin_long = self.params['origin_long'].value
-            print(origin_lat, origin_long)
+            self.origin_lat = self.params['origin_lat'].value
+            self.origin_long = self.params['origin_long'].value
+            
             if 'suggested_offset_x' in self.params:
                 offset_x = self.params['suggested_offset_x'].value
             else:
@@ -129,7 +130,7 @@ class Building:
                 offset_y = 0
 
             self.global_transform = \
-                WGS84TransformAlvinXY(crs_name, (offset_x, offset_y), (origin_lat , origin_long))
+                WGS84TransformAlvinXY(crs_name, (offset_x, offset_y), (self.origin_lat , self.origin_long))
 
         self.levels = {}
         self.model_counts = {}
@@ -458,13 +459,25 @@ class Building:
                 crs_ele.text = self.global_transform.frame_name
 
         elif self.coordinate_system == CoordinateSystem.wgs84:
-            tx = self.global_transform.x
-            ty = self.global_transform.y
-            offset_ele = SubElement(world, 'offset')
-            offset_ele.text = f'{tx} {ty} 0 0 0 0'
-            crs_ele = SubElement(world, 'crs')
-            crs_ele.text = self.global_transform.crs_name
-
+            # tx = self.global_transform.x
+            # ty = self.global_transform.y
+            # offset_ele = SubElement(world, 'offset')
+            # offset_ele.text = f'{tx} {ty} 0 0 0 0'
+            # crs_ele = SubElement(world, 'crs')
+            # crs_ele.text = self.global_transform.crs_name
+            spherical_coord_ele = SubElement(world, 'spherical_coordinates')
+            surface_model_ele = SubElement(spherical_coord_ele, 'surface_model')
+            surface_model_ele.text = 'EARTH_WGS84'
+            latitude_deg_ele = SubElement(spherical_coord_ele, 'latitude_deg')
+            latitude_deg_ele.text = str(self.origin_lat)
+            longitude_deg_ele = SubElement(spherical_coord_ele, 'longitude_deg')
+            longitude_deg_ele.text = str(self.origin_long)
+            elevation_ele = SubElement(spherical_coord_ele, 'elevation')
+            elevation_ele.text = '0'
+            heading_deg_ele = SubElement(spherical_coord_ele, 'heading_deg')
+            heading_deg_ele.text = '0'
+            
+            
         gui_ele = world.find('gui')
         c = self.center()
         # Transforming camera to account for offsets if
