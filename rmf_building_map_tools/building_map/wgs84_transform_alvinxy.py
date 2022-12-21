@@ -20,7 +20,7 @@ class WGS84TransformAlvinXY:
     def transform_point(self, p):
         lon = p[0]
         lat = p[1]
-        (tm_northing, tm_easting) = \
+        ( tm_easting, tm_northing ) = \
             self.wgs84_to_tm.transform(lat, lon,  self.origin_lat, self.origin_lon )
         print(f'lat={lat} lon={lon} => ({tm_easting}, {tm_northing})')
 
