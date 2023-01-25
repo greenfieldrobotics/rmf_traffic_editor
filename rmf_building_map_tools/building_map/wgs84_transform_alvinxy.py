@@ -24,5 +24,5 @@ class WGS84TransformAlvinXY:
             self.wgs84_to_tm.transform(lat, lon,  self.origin_lat, self.origin_lon )
         print(f'lat={lat} lon={lon} => ({tm_easting}, {tm_northing})')
 
-        return (tm_easting, tm_northing)
+        return (-tm_easting, -tm_northing)
     
